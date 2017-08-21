@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>射击气球</title>
+		<style type="text/css">
+			body,html{height: 100%;}
+			body{
+				position: relative;
+				background-size: 100% 100%;
+				background-repeat:no-repeat;
+				overflow: hidden;
+			}
+			.balloon{
+				width: 96px;
+				height: 122px;
+				position: absolute;
+				background-image: url(img/balloon.png);
+				background-repeat: no-repeat;
+				z-index:2
+				/*background-position: 0px -122px;*/
+			}
+			.frameIndex{
+				position: absolute;
+				right: 20px;
+				top: 20px;
+			}
+			.cloud{
+				z-index:1;
+				width: 200px;
+				height: 100px;
+				background: url(img/cloud.png) no-repeat;
+				background-size: 100% 100%;
+				position: absolute;
+			}
+			.score{
+				position: absolute;
+				left: 50px;
+				top: 50px;
+			}
+			.baozha{
+				animation: mov1 .5s ease-in-out forwards;
+			}
+			@keyframes mov1{
+				from{transform:  scale(1);opacity: 1;}
+				to{transform: scale(20);opacity: 0;}
+			}
+			.gun{
+				position: absolute;
+				z-index: 3;
+				width: 96px;
+				height: 96px;
+				top: -200px;left: -200px;
+				background: url(../819/c/img/gun.png);				
+			}
+		</style>
+	</head>
+	<body>
+		<button id="gamestart">游戏开始</button>
+		<div class="frameIndex">
+			游戏进行了：0帧
+		</div>
+		<script type="text/javascript">
+			var btStart=document.getElementById('gamestart');
+			var frameIn=document.getElementsByClassName('frameIndex')[0];
+			btStart.addEventListener('click',function(){
+				game.start();
+			});
+				//生成m到n之间的随机数
+			function r(m,n){
+				var r1=Math.random();
+				var r2=(n-m+1)*r1;
+				var r3=m+r2;
+				var r4=Math.floor(r3);
+				return r4;
+			}
+			//气球的精灵图坐标
+			var markList = {
+				"1" : "0px 0px",
+				"2" : "-96px 0px",
+				"3" : "-192px 0px",
+				"4" : "-288px 0px",
+				"5" : "0px -122px",
+				"6" : "-96px -122px",
+				"7" : "-192px -122px",
+				"8" : "-288px -122px"
+			}
+			//定义一个气球 气球的属性 1.分值 mark 2.速度 speed 3.坐标 x,y 4 元素 ele 用来承载气球的dom元素
+			//方法：1.上升move 2 爆炸  blow 3 重生 birth
+			function Balloon(){
+				this.mark=r(1,8);
+				this.speed=this.mark;
+				this.ele=document.createElement('div');
+				//随机生成气球的横坐标
+				this.x=r(0,document.body.offsetWidth-96);
+				this.y=document.body.offsetHeight+212;
+				this.ele.className="balloon";
+				//根据分值来展示气球
+				this.ele.style.backgroundPosition=markList[this.mark];
+				this.ele.style.left=this.x+"px";
+				this.ele.style.top=this.y+"px";
+				var that=this;
+//				this.ele.addEventListener("click",function(){
+//					score.grade=score.grade+that.mark;
+//					score.update(score.grade);
+//					var v1=new Audio("img/gun.mp3");
+//					v1.play();
+//					that.bolw();
+//					
+//				});
+				this.ele.addEventListener("animationend",function(){
+					that.birth();
+				})
+				document.body.appendChild(this.ele);
+			
+			}
+			Balloon.prototype={
+				constructor:Balloon,
+				move:function(){
+					if(this.y<-122){
+					//	console.log("飞出去了");
+						this.birth();
+					}else{
+						this.y=this.y-this.speed;
+						this.ele.style.top=this.y+"px";
+					}
+				},
+				bolw:function(){
+					this.ele.className="balloon baozha";
+				},
+				birth:function(){
+					//还是同一个对象 但是改变了属性
+					this.ele.className="balloon";
+					this.mark=r(1,8);
+					this.speed=this.mark;
+					this.ele.style.backgroundPosition=markList[this.mark];
+					this.x=r(0,document.body.offsetWidth-96);
+					this.y=document.body.offsetHeight+212;
+					this.ele.style.left=this.x+"px";
+					this.ele.style.top=this.y+"px";
+				},
+			}
+			//云朵
+			function Cloud(){
+				this.ele=document.createElement('div');
+				this.ele.className="cloud";
+//				this.x=document.body.offsetWidth-200;
+//				this.y=r(10,100);
+//				this.ele.style.left=this.x+"px";
+//				this.ele.style.top= this.y+"px";
+//				//设置云朵的随机宽度
+//				this.w=r(80,180);
+//				this.ele.style.width= this.w+"px";
+//				this.ele.style.height=this.w/2+"px";
+				this.birth();
+				document.body.appendChild(this.ele);
+			}
+			Cloud.prototype={
+				constructor:Cloud,
+				move:function(){
+					var that=this;
+					setInterval(function(){
+						if(that.x>-that.w){
+							that.x=that.x-that.speed;
+							that.ele.style.left=that.x+"px";
+						}else{
+							//console.log("chaochuqule");
+							that.birth();
+						}
+						//debugger
+						//console.log(that.x,that.speed);
+					},1000/50);
+				},
+				birth:function(){
+					this.speed=r(2,5);
+					this.x=document.body.offsetWidth-200;					
+					this.y=r(10,100);
+					this.ele.style.left=this.x+"px";
+					this.ele.style.top= this.y+"px";
+					this.w=r(80,180);
+					this.ele.style.width= this.w+"px";
+					this.ele.style.height=this.w/2+"px";
+				}
+			}
+			//设置背景
+			var background={
+				bgurl:"img/bg.jpg",
+				set:function(yourBGUrl){
+					if(yourBGUrl===undefined){
+						yourBGUrl=this.bgurl;
+					}
+					document.body.style.backgroundImage="url("+yourBGUrl+")";
+				}
+			}
+			//设置分数
+			var score={
+				ele:document.createElement("div"),
+				grade:0,
+				show:function(){
+						this.ele.className="score";
+						document.body.appendChild(this.ele);
+						this.update(this.grade);
+					},
+				update:function(yourscore){
+					this.ele.innerHTML="得分："+yourscore;
+				}
+			}
+			//枪的设置
+			var gun={
+				ele:document.createElement('div'),
+				set:function(){
+					this.ele.className="gun";
+					document.body.appendChild(this.ele);
+				},
+				update:function(x,y){
+					this.ele.style.left=x+"px";
+					this.ele.style.top=y+"px";					
+				}
+			}
+			//导演
+			var game ={
+				//演员列表
+				actor:[],
+				balloonNumber:5,
+				//设置云朵的个数
+				cloudNumber:3,
+				//设置帧  控制屏幕内产生的气球的动作
+				freamIndex:0,
+				//游戏开始
+				start:function(){
+//					for(var i=0 ;i<this.balloonNumber; i++){
+//						this.actor.push(new Balloon());
+//					}
+					var that=this;
+					var currentBalloonNumber = 0,
+						currentCuloudNumber = 0;
+						background.set();
+						score.show();
+						gun.set();
+					setInterval(function(){
+						that.freamIndex++;
+						if(that.freamIndex%50==0&&currentBalloonNumber<that.balloonNumber){
+							that.actor.push(new Balloon());
+							currentBalloonNumber++;
+						}
+						if(that.freamIndex%250==0&&currentCuloudNumber<that.cloudNumber){
+							that.actor.push(new Cloud());
+							currentCuloudNumber++;
+						}
+						for(var i=0,len=that.actor.length;i<len;i++){
+							that.actor[i].move();
+						}
+						frameIn.innerHTML="游戏进行了："+that.freamIndex+"帧";
+					},1000/50);	
+					document.body.addEventListener("mousemove",function(e){
+						//console.log(e.clientX,e.clientY);
+						gun.update(e.clientX-48,e.clientY-48);
+					});
+					document.body.addEventListener("click",function(e){
+						var v1=new Audio("img/gun.mp3");
+								v1.play();
+						//console.log(e.clientX,e.clientY);
+						for(var t in that.actor){
+							//console.log(that.actor[t]);
+							var centerX=that.actor[t].x+96/2;
+							var centerY=that.actor[t].y+96/2;
+							if(that.actor[t].__proto__.constructor==Balloon&&((Math.pow(e.clientX-centerX,2)+Math.pow(e.clientY-centerY,2))<Math.pow(96/2,2))){
+								score.grade=score.grade+that.actor[t].mark;
+								score.update(score.grade);
+								
+								that.actor[t].bolw();					
+							}
+						}
+						
+					});
+					document.body.addEventListener("animationend",function(e){
+						that.actor.push(new Balloon());
+					})
+					
+				},
+			}
+			
+		</script>
+	</body>
+</html>
